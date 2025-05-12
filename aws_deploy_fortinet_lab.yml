@@ -1,0 +1,9 @@
+---
+- name: Deploy Fortinet lab on AWS
+  hosts: aws
+  module_defaults:
+    group/aws:
+      region: '{{ region }}'
+
+  roles:
+    - aws_fortinet_provision

@@ -1,0 +1,111 @@
+- name: Create VPC
+  amazon.aws.ec2_vpc_net:
+    name: "{{ vpc.name }}"
+    cidr_block: "{{ vpc.cidr_block }}"
+    state: "{{ vpc.state }}"
+  register: vpc_info
+
+- name: Create IGW
+  amazon.aws.ec2_vpc_igw:
+    vpc_id: "{{ vpc_info.vpc.id }}"
+    tags:
+      Name: "{{ igw.name }}"
+    state: "{{ igw.state }}"
+  register: igw_info
+
+- name: Create subnets
+  amazon.aws.ec2_vpc_subnet:
+    cidr: "{{ item.cidr }}"
+    vpc_id: "{{ vpc_info.vpc.id }}"
+    az: "{{ item.az }}"
+    tags:
+      Name: "{{ item.name }}"
+    state: "{{ item.state }}"
+  loop: "{{ subnets }}"
+  register: subnet_info
+
+- name: Create security groups
+  amazon.aws.ec2_security_group:
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    vpc_id: "{{ vpc_info.vpc.id }}"
+    rules: "{{ item.rules }}"
+    state: "{{ item.state }}"
+  loop: "{{ security_groups }}"
+  register: sg_info
+
+- name: Create network interfaces
+  amazon.aws.ec2_eni:
+    name: "{{ item.name }}"
+    private_ip_address: "{{ item.ip_address }}"
+    subnet_id: "{{ (subnet_info.results | selectattr('item.name', 'equalto', item.subnet_name) | first).subnet.id }}"
+    security_groups:
+      - "{{ (sg_info.results | selectattr('group_name', 'equalto', item.sg_name) | first).group_id }}"
+    delete_on_termination: true
+    state: "{{ item.state }}"
+  loop: "{{ interfaces }}"
+  register: eni_info
+
+- name: Extract object IDs
+  ansible.builtin.set_fact:
+    fntlab_igw_1_id: "{{ igw_info.gateway_id }}"
+    fntlab_subnet_public_mgmt_id: "{{ (subnet_info.results | selectattr('item.name', 'equalto', 'fntlab-subnet-public-mgmt') | first).subnet.id }}"
+    fntlab_subnet_private_lan1_id: "{{ (subnet_info.results | selectattr('item.name', 'equalto', 'fntlab-subnet-private-lan1') | first).subnet.id }}"
+    fntlab_subnet_private_lan2_id: "{{ (subnet_info.results | selectattr('item.name', 'equalto', 'fntlab-subnet-private-lan2') | first).subnet.id }}"
+    fntlab_eni_public_mgmt_1_id: "{{ (eni_info.results | selectattr('interface.name', 'equalto', 'fntlab-eni-public-mgmt-1') | first).interface.id }}"
+    fntlab_eni_private_lan1_1_id: "{{ (eni_info.results | selectattr('interface.name', 'equalto', 'fntlab-eni-private-lan1-1') | first).interface.id }}"
+    fntlab_eni_private_lan2_1_id: "{{ (eni_info.results | selectattr('interface.name', 'equalto', 'fntlab-eni-private-lan2-1') | first).interface.id }}"
+
+- name: Define route tables
+  ansible.builtin.set_fact:
+    route_tables:
+      - name: fntlab-rt-public-mgmt
+        subnets:
+          - "{{ fntlab_subnet_public_mgmt_id }}"
+        routes:
+          - dest: "0.0.0.0/0"
+            gateway_id: "{{ fntlab_igw_1_id }}"
+      - name: fntlab-rt-private-lan1
+        subnets: "{{ fntlab_subnet_private_lan1_id }}"
+        routes:
+          - dest: "0.0.0.0/0"
+            network_interface_id: "{{ fntlab_eni_private_lan1_1_id }}"
+      - name: fntlab-rt-private-lan2
+        subnets: "{{ fntlab_subnet_private_lan2_id }}"
+        routes:
+          - dest: "0.0.0.0/0"
+            network_interface_id: "{{ fntlab_eni_private_lan2_1_id }}"
+
+- name: Create route tables
+  amazon.aws.ec2_vpc_route_table:
+    vpc_id: "{{ vpc_info.vpc.id }}"
+    tags:
+      Name: "{{ item.name }}"
+    subnets: "{{ item.subnets }}"
+    routes: "{{ item.routes }}"
+  loop: "{{ route_tables }}"
+
+- name: Create Fortigate Instance
+  amazon.aws.ec2_instance:
+    name: "{{ fortigate_instance.name }}"
+    key_name: "{{ fortigate_instance.key_name }}"
+    instance_type: "{{ fortigate_instance.instance_type }}"
+    count: 1
+    network_interfaces_ids:
+      - id: "{{ fntlab_eni_public_mgmt_1_id }}"
+        device_index: 0
+      - id: "{{ fntlab_eni_private_lan1_1_id }}"
+        device_index: 1
+      - id: "{{ fntlab_eni_private_lan2_1_id }}"
+        device_index: 2
+    vpc_subnet_id: "{{ fntlab_subnet_public_mgmt_id }}"
+    image_id: "{{ fortigate_instance.image_id }}"
+    state: running
+
+- name: Associate Elastic IP with Fortigate instance
+  amazon.aws.ec2_eip:
+    in_vpc: true
+    device_id: "{{ fntlab_eni_public_mgmt_1_id }}"
+    tags:
+      Name: "{{ fortigate_eip.name }}"
+    state: present

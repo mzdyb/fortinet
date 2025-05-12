@@ -1,0 +1,9 @@
+---
+- name: Remove Fortinet lab from AWS
+  hosts: aws
+  module_defaults:
+    group/aws:
+      region: '{{ region }}'
+
+  roles:
+    - aws_fortinet_deprovision

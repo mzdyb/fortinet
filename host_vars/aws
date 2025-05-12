@@ -1,0 +1,81 @@
+---
+region: eu-central-1
+
+vpc:
+  name: fntlab-vpc-1
+  cidr_block: 10.0.0.0/16
+  state: present
+
+igw:
+  name: fntlab-igw-1
+  state: present
+
+subnets:
+  - name: fntlab-subnet-public-mgmt
+    cidr: 10.0.0.0/24
+    az: eu-central-1a
+    state: present
+  - name: fntlab-subnet-private-lan1
+    cidr: 10.0.1.0/24
+    az: eu-central-1a
+    state: present
+  - name: fntlab-subnet-private-lan2
+    cidr: 10.0.2.0/24
+    az: eu-central-1a
+    state: present
+
+security_groups:
+  - name: fntlab-sg-public
+    state: present
+    description: public SG
+    rules:
+      - proto: tcp
+        ports:
+          - 443
+        cidr_ip: 0.0.0.0/0
+        rule_desc: "allow all on port 80"
+      - proto: tcp
+        ports:
+          - 22
+        cidr_ip: 0.0.0.0/0
+        rule_desc: "allow all on port 22"
+  - name: fntlab-sg-private
+    state: present
+    description: private SG
+    rules:
+      - proto: all
+        ports:
+          - 1-65535
+        cidr_ip: 0.0.0.0/0
+        rule_desc: "allow all"
+
+interfaces:
+  - name: fntlab-eni-public-mgmt-1
+    ip_address: 10.0.0.5
+    subnet_name: fntlab-subnet-public-mgmt
+    sg_name: fntlab-sg-public
+    state: present
+  - name: fntlab-eni-private-lan1-1
+    ip_address: 10.0.1.5
+    subnet_name: fntlab-subnet-private-lan1
+    sg_name: fntlab-sg-private
+    state: present
+  - name: fntlab-eni-private-lan2-1
+    ip_address: 10.0.2.5
+    subnet_name: fntlab-subnet-private-lan2
+    sg_name: fntlab-sg-private
+    state: present
+
+route_tables:
+  - name: fntlab-rt-public-mgmt
+  - name: fntlab-rt-private-lan1
+  - name: fntlab-rt-private-lan2 
+
+fortigate_instance:
+  name: fntlab-fgt-1
+  instance_type: t2.small
+  key_name: fntlab-fgt-keypair
+  image_id: ami-078946f0ac9534255
+
+fortigate_eip:
+  name: fntlab-eip-fgt-1
