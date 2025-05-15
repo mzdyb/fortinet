@@ -1,0 +1,10 @@
+pytz
+pynetbox
+ncclient
+ntc-templates
+genie
+pyats
+jxmlease
+xmltodict
+jmespath
+packaging

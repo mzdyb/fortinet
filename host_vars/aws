@@ -55,6 +55,11 @@ interfaces:
     subnet_name: fntlab-subnet-public-mgmt
     sg_name: fntlab-sg-public
     state: present
+  - name: fntlab-eni-public-mgmt-2
+    ip_address: 10.0.0.6
+    subnet_name: fntlab-subnet-public-mgmt
+    sg_name: fntlab-sg-public
+    state: present
   - name: fntlab-eni-private-lan1-1
     ip_address: 10.0.1.5
     subnet_name: fntlab-subnet-private-lan1
@@ -76,6 +81,11 @@ fortigate_instance:
   instance_type: t2.small
   key_name: fntlab-fgt-keypair
   image_id: ami-078946f0ac9534255
+  eip: fntlab-eip-fgt-1
 
-fortigate_eip:
-  name: fntlab-eip-fgt-1
+fortimanager_instance:
+  name: fntlab-fmgr-1
+  instance_type: m5.xlarge
+  key_name: fntlab-fmgr-keypair
+  image_id: ami-0b7f006310ad3eb9b
+  eip: fntlab-eip-fmgr-1

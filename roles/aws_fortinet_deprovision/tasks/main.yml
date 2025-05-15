@@ -5,6 +5,12 @@
     filters:
       "tag:Name": "{{ fortigate_instance.name }}"
 
+- name: Terminate FortiManager Instance
+  amazon.aws.ec2_instance:
+    state: absent
+    filters:
+      "tag:Name": "{{ fortimanager_instance.name }}"
+
 - name: Gather VPC information
   amazon.aws.ec2_vpc_net_info:
     filters:
@@ -117,18 +123,35 @@
 - name: Gather Fortigate EIP information
   amazon.aws.ec2_eip_info:
     filters:
-      "tag:Name": "{{ fortigate_eip.name }}"
-  register: eip_info
+      "tag:Name": "{{ fortigate_instance.eip }}"
+  register: eip_info_fgt
 
 - name: Diassociate Elastic IP from Fortigate instance
   amazon.aws.ec2_eip:
     # device_id: "{{ public_eni_info.network_interfaces[0].id }}"
     # in_vpc: true
     # release_on_disassociation: true
-    ip: "{{ eip_info.addresses[0].public_ip }}"
+    ip: "{{ eip_info_fgt.addresses[0].public_ip }}"
     tag_name: Name
-    tag_value: "{{ fortigate_eip.name }}"
+    tag_value: "{{ fortigate_instance.eip }}"
     state: absent
   when:
-    - eip_info.addresses is defined
-    - eip_info.addresses | length > 0
+    - eip_info_fgt.addresses is defined
+    - eip_info_fgt.addresses | length > 0
+
+
+- name: Gather Fortigate EIP information
+  amazon.aws.ec2_eip_info:
+    filters:
+      "tag:Name": "{{ fortimnager_instance.eip }}"
+  register: eip_info_fmgr
+
+- name: Diassociate Elastic IP from Fortigate instance
+  amazon.aws.ec2_eip:
+    ip: "{{ eip_info_fmgr.addresses[0].public_ip }}"
+    tag_name: Name
+    tag_value: "{{ fortigate_instance.eip }}"
+    state: absent
+  when:
+    - eip_info_fmgr.addresses is defined
+    - eip_info_fmgr.addresses | length > 0
