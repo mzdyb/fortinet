@@ -87,5 +87,5 @@ fortimanager_instance:
   name: fntlab-fmgr-1
   instance_type: m5.xlarge
   key_name: fntlab-fmgr-keypair
-  image_id: ami-0b7f006310ad3eb9b
+  image_id: ami-047926efe79b67207
   eip: fntlab-eip-fmgr-1

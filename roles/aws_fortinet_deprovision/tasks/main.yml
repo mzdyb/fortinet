@@ -114,23 +114,16 @@
     state: absent
   when: vpc_id is defined
 
-# - name: Gather Fortigate public interface information
-#   amazon.aws.ec2_eni_info:
-#     filters:
-#       "tag:Name": fntlab-eni-public-mgmt-1
-#   register: public_eni_info
-
 - name: Gather Fortigate EIP information
   amazon.aws.ec2_eip_info:
     filters:
       "tag:Name": "{{ fortigate_instance.eip }}"
   register: eip_info_fgt
+  when:
+    - fortigate_instance.eip is defined
 
 - name: Diassociate Elastic IP from Fortigate instance
   amazon.aws.ec2_eip:
-    # device_id: "{{ public_eni_info.network_interfaces[0].id }}"
-    # in_vpc: true
-    # release_on_disassociation: true
     ip: "{{ eip_info_fgt.addresses[0].public_ip }}"
     tag_name: Name
     tag_value: "{{ fortigate_instance.eip }}"
@@ -139,12 +132,13 @@
     - eip_info_fgt.addresses is defined
     - eip_info_fgt.addresses | length > 0
 
-
-- name: Gather Fortigate EIP information
+- name: Gather FortiManager EIP information
   amazon.aws.ec2_eip_info:
     filters:
-      "tag:Name": "{{ fortimnager_instance.eip }}"
+      "tag:Name": "{{ fortimanager_instance.eip }}"
   register: eip_info_fmgr
+  when:
+    - fortimanager_instance.eip is defined
 
 - name: Diassociate Elastic IP from Fortigate instance
   amazon.aws.ec2_eip:

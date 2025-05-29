@@ -86,30 +86,30 @@
     routes: "{{ item.routes }}"
   loop: "{{ route_tables }}"
 
-# - name: Create Fortigate Instance
-#   amazon.aws.ec2_instance:
-#     name: "{{ fortigate_instance.name }}"
-#     key_name: "{{ fortigate_instance.key_name }}"
-#     instance_type: "{{ fortigate_instance.instance_type }}"
-#     count: 1
-#     network_interfaces_ids:
-#       - id: "{{ fntlab_eni_public_mgmt_1_id }}"
-#         device_index: 0
-#       - id: "{{ fntlab_eni_private_lan1_1_id }}"
-#         device_index: 1
-#       - id: "{{ fntlab_eni_private_lan2_1_id }}"
-#         device_index: 2
-#     vpc_subnet_id: "{{ fntlab_subnet_public_mgmt_id }}"
-#     image_id: "{{ fortigate_instance.image_id }}"
-#     state: running
+- name: Create Fortigate Instance
+  amazon.aws.ec2_instance:
+    name: "{{ fortigate_instance.name }}"
+    key_name: "{{ fortigate_instance.key_name }}"
+    instance_type: "{{ fortigate_instance.instance_type }}"
+    count: 1
+    network_interfaces_ids:
+      - id: "{{ fntlab_eni_public_mgmt_1_id }}"
+        device_index: 0
+      - id: "{{ fntlab_eni_private_lan1_1_id }}"
+        device_index: 1
+      - id: "{{ fntlab_eni_private_lan2_1_id }}"
+        device_index: 2
+    vpc_subnet_id: "{{ fntlab_subnet_public_mgmt_id }}"
+    image_id: "{{ fortigate_instance.image_id }}"
+    state: running
 
-# - name: Associate Elastic IP with Fortigate instance
-#   amazon.aws.ec2_eip:
-#     in_vpc: true
-#     device_id: "{{ fntlab_eni_public_mgmt_1_id }}"
-#     tags:
-#       Name: "{{ fortigate_instance.eip }}"
-#     state: present
+- name: Associate Elastic IP with Fortigate instance
+  amazon.aws.ec2_eip:
+    in_vpc: true
+    device_id: "{{ fntlab_eni_public_mgmt_1_id }}"
+    tags:
+      Name: "{{ fortigate_instance.eip }}"
+    state: present
 
 - name: Create FortiManager Instance
   amazon.aws.ec2_instance:
