@@ -1,2 +1,2 @@
 # fortinet
-Automating Fortinet with Ansible
+Automating Fortinet implementation on AWS with Ansible
