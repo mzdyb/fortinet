@@ -1,7 +1,3 @@
 ---
 collections:
   - name: amazon.aws
-  - name: fortinet.fortios
-  - name: fortinet.fortimanager
-  - name: fortinet.fmgdevice
-  - name: fortinet.fortianalyzer

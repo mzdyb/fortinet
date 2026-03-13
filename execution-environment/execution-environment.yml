@@ -41,10 +41,24 @@ additional_build_steps:
 dependencies:
   galaxy:
     collections:
+      - name: community.general
+      - name: ansible.posix
       - name: amazon.aws
       - name: fortinet.fortios
       - name: fortinet.fmgdevice
       - name: fortinet.fortimanager
+
+  python:
+    - pytz
+    - pynetbox
+    - ncclient
+    - ntc-templates
+    - genie
+    - pyats
+    - jxmlease
+    - xmltodict
+    - jmespath
+    - packaging
 
   system:
     - python3 >=3.9
